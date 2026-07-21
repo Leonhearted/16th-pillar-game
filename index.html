@@ -232,7 +232,7 @@ body {
 }
 .gm-close a {
     font-family: 'Amatic SC', sans-serif;
-    font-size: clamp(1.2rem, 4.4cqh, 2rem);
+    font-size: clamp(1.2rem, 3.6cqh, 2rem);
     color: #fff;
     cursor: pointer;
 }
@@ -269,11 +269,19 @@ body {
 #story {
     /* Dual-constraint fit: whichever dimension is tighter wins, so this
        letterboxes correctly whether the viewport itself is landscape
-       or portrait (e.g. a phone held upright). */
+       or portrait (e.g. a phone held upright). dvh/dvw (dynamic
+       viewport units) are declared after the vh/vw fallback so mobile
+       browsers recalculate correctly when their address bar shows or
+       hides on rotation — plain vh/vw can otherwise cut content off
+       right after rotating until the page is manually refreshed. */
     width: 100vw;
+    width: 100dvw;
     height: 100vh;
+    height: 100dvh;
     max-width: calc(100vh * 16 / 9);
+    max-width: calc(100dvh * 16 / 9);
     max-height: calc(100vw * 9 / 16);
+    max-height: calc(100dvw * 9 / 16);
     aspect-ratio: 16 / 9;
 
     margin: 0 auto;
@@ -288,6 +296,38 @@ body {
        off ITS real rendered height/width (cqh/cqw), not the viewport. */
     container-type: size;
     container-name: frame;
+}
+
+/* ===================================================== */
+/* ROTATE PROMPT (mobile/touch only)                       */
+/* Browsers can't reliably force a phone into landscape —   */
+/* iOS Safari has no orientation-lock API at all — so the    */
+/* standard approach is: detect portrait via media query,     */
+/* hide the game, show a simple message instead. Scoped to     */
+/* touch devices (pointer: coarse) so a narrow desktop browser  */
+/* window doesn't accidentally trigger it.                       */
+/* ===================================================== */
+#rotate-prompt {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    background-color: #000;
+    color: #ffffff;
+    font-family: 'Amatic SC', sans-serif;
+    font-weight: 700;
+    font-size: clamp(1.6rem, 7vh, 3rem);
+    line-height: 1.3;
+    padding: 8%;
+    box-sizing: border-box;
+}
+
+@media (orientation: portrait) and (pointer: coarse) {
+    #rotate-prompt { display: flex; }
+    #story { display: none; }
 }
 
 /* ===================================================== */
@@ -323,7 +363,7 @@ body {
     font-weight: 700;
     /* Bumped up per request: 14cqh middle value, with a higher ceiling
        (8rem) so it doesn't get capped before reaching that size. */
-    font-size: clamp(3rem, 40cqh, 8rem);
+    font-size: clamp(3rem, 20cqh, 8rem);
     text-shadow: 1px 1px 3px #000;
     -webkit-text-stroke: 0.5px #fff;
 }
@@ -696,7 +736,7 @@ $(document).on(':passagestart', function () {
             '<a class="link-internal" id="title-load-game">Load Game</a>' +
         '</div>',
         '<div id="game-menu-icon" tabindex="0"><span></span></div>',
-        '<div id="gm-menu-overlay" class="gm-overlay">' +
+        '<div id="rotate-prompt">Please rotate your device<br>to landscape to play</div>',        '<div id="gm-menu-overlay" class="gm-overlay">' +
             '<div class="gm-panel">' +
                 '<h2>Menu</h2>' +
                 '<button id="gm-resume">Resume</button>' +
